@@ -1,0 +1,39 @@
+#:kivy 1.8.0
+<ScannerScreen2>:
+    id: scanner2
+    #:import XCamera kivy_garden.xcamera.XCamera
+    #:import platform kivy.utils
+    BoxLayout:
+        orientation: 'vertical'
+        Widget:
+            # invert width/height on rotated Android
+            # https://stackoverflow.com/a/45192295/185510
+            id: proxy
+            XCamera:
+                id: xCam
+                play: True
+                resolution: root.resolution
+                allow_stretch: True
+                keep_ratio: True
+                center: self.size and proxy.center
+                size:
+                    (proxy.height, proxy.width) if platform == 'android' \
+                    else (proxy.width, proxy.height)
+                # Android camera rotation workaround, refs:
+                # https://github.com/AndreMiras/garden.zbarcam/issues/3
+                canvas.before:
+                    PushMatrix
+                    Rotate:
+                        angle: -90 if platform == 'android' else 0
+                        origin: self.center
+                canvas.after:
+                    PopMatrix
+        Label:
+            size_hint: None, None
+            size: self.texture_size[0], 50
+            text: ', '.join([str(symbol.data) for symbol in scanner2.symbols])
+        Button:
+            text: 'Back to menu'
+            on_press: 
+                scanner2.stop()
+                app.remove_scanner_screen()
