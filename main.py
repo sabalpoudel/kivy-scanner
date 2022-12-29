@@ -148,6 +148,50 @@ class MenuScreen(Screen):
     pass
 
 
+class CameraScreen(Screen):
+    cam_no = NumericProperty(0)
+    resolution = ListProperty([640, 480])
+
+    symbols = ListProperty([])
+    Symbol = namedtuple('Symbol', ['type', 'data'])
+    # checking all possible types by default
+    code_types = ListProperty(XZbarDecoder().get_available_code_types())
+
+    def on_pre_enter(self):
+        self.ids.cam.play = True
+        # open if camera is closed
+        if not self.ids.cam._camera._device.isOpened():
+            self.ids.cam._camera._device.open(0)
+        self.ids.cam.texture = self.ids.cam._camera.texture
+
+    def on_enter(self):
+        self.ids.cam._camera.bind(on_texture=self._on_texture)
+
+    def _on_texture(self, instance):
+        self.symbols = self._detect_qrcode_frame(
+            texture=instance.texture, code_types=self.code_types)
+
+    @classmethod
+    def _detect_qrcode_frame(cls, texture, code_types):
+        image_data = texture.pixels
+        size = texture.size
+        # Fix for mode mismatch between texture.colorfmt and data returned by
+        # texture.pixels. texture.pixels always returns RGBA, so that should
+        # be passed to PIL no matter what texture.colorfmt returns. refs:
+        # https://github.com/AndreMiras/garden.zbarcam/issues/41
+        pil_image = PIL.Image.frombytes(mode='RGBA', size=size,
+                                        data=image_data)
+        pil_image = fix_android_image(pil_image)
+        return XZbarDecoder().decode(pil_image, code_types)
+
+    def on_leave(self):
+        self.ids.cam.play = False
+        self.ids.cam.texture = None
+        self.ids.cam._camera._device.release()
+
+    pass
+
+
 class ScannerScreen2(Screen):
     camera_index = NumericProperty(0)
     resolution = ListProperty([640, 480])
@@ -177,7 +221,8 @@ class ScannerScreen2(Screen):
         # `self.xcamera._camera` instance may not be available if e.g.
         # the `CAMERA` permission is not granted
         print('--------------_setup(self)-----')
-        print(self.xcamera, self.camera_index)
+        print({"xcamera": self.xcamera,
+              "camera_index": self.camera_index, "self": self})
         print('--------------_setup(self)-----')
         # self.xcamera.index = self.camera_index
         self.xcamera.bind(on_camera_ready=self._on_camera_ready)
@@ -211,6 +256,7 @@ class ScannerScreen2(Screen):
 
     @property
     def xcamera(self):
+        print("========", {"camSelf": self})
         xcamera = self.ids['xCam']
         xcamera.index = self.camera_index
         return xcamera
@@ -243,7 +289,6 @@ class MyApp(App):
         return self.sm
 
     def load_screen(self, name):
-        print('load_screen-------------------------')
         if name == 'scanner2':
             if not self.sm.has_screen('scanner2'):
                 Builder.load_file('Scanner2.kv')
@@ -256,6 +301,13 @@ class MyApp(App):
                 # cam.play = True
                 # self.sm.add_widget(ScannerScreen2(name='scanner2'))
             self.sm.current = 'scanner2'
+        elif name == 'camera':
+            if not self.sm.has_screen('camera'):
+                Builder.load_file('Camera.kv')
+                self.sm.add_widget(CameraScreen(name='camera'))
+            else:
+                print(self)
+            self.sm.current = 'camera'
         pass
 
     def remove_scanner_screen(self):

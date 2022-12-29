@@ -3,7 +3,10 @@
 <MenuScreen>:
     BoxLayout:
         Button:
-            text: 'Goto Scanner 2'
+            text: 'Goto Camera'
+            on_press: app.load_screen('camera')
+        Button:
+            text: 'Goto Scanner'
             on_press: app.load_screen('scanner2')
         Button:
             text: 'Quit'
