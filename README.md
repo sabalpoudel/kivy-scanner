@@ -2,10 +2,18 @@
 
 **_Simple scanner app that decodes Qr-code and bar-code made on Kivy_**
 
+> This is a kivy app used for scanning Qr/bar code.
+> It has fix for the issue where camera would not re-initialize after being released.
+> It contains the fix using both kivy.Camera and kivy_garden.xcamera widgtes.
+
+---
+
 Here is a check list before running this app:
 
 - You have a working Kivy installation. See the [Installing Kivy](https://kivy.org/doc/stable/gettingstarted/installation.html) section for detailed descriptions.
 - You know how to run a basic Kivy application. See [Create an application](https://kivy.org/doc/stable/guide/basic.html#quickstart) if you don’t.
+
+---
 
 Widgets used:
 

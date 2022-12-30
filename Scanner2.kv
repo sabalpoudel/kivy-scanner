@@ -4,7 +4,12 @@
     #:import XCamera kivy_garden.xcamera.XCamera
     #:import platform kivy.utils
     BoxLayout:
+        padding: 5
+        spacing: 5
         orientation: 'vertical'
+        Label:
+            size_hint: (1, .1)
+            text: 'Qr/bar code reader - kivy_garden.xcamera'
         Widget:
             # invert width/height on rotated Android
             # https://stackoverflow.com/a/45192295/185510
@@ -29,11 +34,14 @@
                 canvas.after:
                     PopMatrix
         Label:
-            size_hint: None, None
+            size_hint: (1, .1)
             size: self.texture_size[0], 50
             text: ', '.join([str(symbol.data) for symbol in scanner2.symbols])
         Button:
+            size_hint: (1, .2)
             text: 'Back to menu'
-            on_press: 
-                scanner2.stop()
-                app.remove_scanner_screen()
+            on_press: app.go_to_screen('menu')
+        Button:
+            text: 'Exit'
+            size_hint: (1, .1)
+            on_press: app.stop()

@@ -202,39 +202,21 @@ class ScannerScreen2(Screen):
     code_types = ListProperty(XZbarDecoder().get_available_code_types())
     kv_loaded = False
 
-    def __init__(self, **kwargs):
-        # if not ScannerScreen2.kv_loaded:
-        # lazy loading the kv file rather than loading at module level,
-        # that way the `XCamera` import doesn't happen too early
-        # Builder.load_file('Scanner2.kv')
-        # ScannerScreen2.kv_loaded = True
-        super().__init__(**kwargs)
-        self._setup()
-    # Clock.schedule_once(lambda dt: self._setup())
+    def on_pre_enter(self):
+        Clock.schedule_once(lambda dt: self._setup())
 
     def _setup(self):
-        """
-        Postpones some setup tasks that require self.ids dictionary.
-        """
-        # self._remove_shoot_button()
-
-        # `self.xcamera._camera` instance may not be available if e.g.
-        # the `CAMERA` permission is not granted
-        print('--------------_setup(self)-----')
-        print({"xcamera": self.xcamera,
-              "camera_index": self.camera_index, "self": self})
-        print('--------------_setup(self)-----')
-        # self.xcamera.index = self.camera_index
-        self.xcamera.bind(on_camera_ready=self._on_camera_ready)
-
+        self.ids.xCam.bind(on_camera_ready=self._on_camera_ready)
         # camera may still be ready before we bind the event
-        if self.xcamera._camera is not None:
-            self._on_camera_ready(self.xcamera)
+        if self.ids.xCam._camera is not None:
+            self._on_camera_ready(self.ids.xCam)
 
     def _on_camera_ready(self, xcamera):
-        """
-        Starts binding when the `xcamera._camera` instance is ready.
-        """
+        xcamera.play = True
+        # open if camera is closed
+        if not xcamera._camera._device.isOpened():
+            xcamera._camera._device.open(0)
+        xcamera.texture = xcamera._camera.texture
         xcamera._camera.bind(on_texture=self._on_texture)
 
     def _on_texture(self, instance):
@@ -254,29 +236,10 @@ class ScannerScreen2(Screen):
         pil_image = fix_android_image(pil_image)
         return XZbarDecoder().decode(pil_image, code_types)
 
-    @property
-    def xcamera(self):
-        print("========", {"camSelf": self})
-        xcamera = self.ids['xCam']
-        xcamera.index = self.camera_index
-        return xcamera
-
-    def start(self):
-        print('--------------def start(self)-----', self.xcamera)
-        if platform == "android":
-            self.xcamera._camera.init_camera()
-        self.xcamera.play = True
-
-    def stop(self):
-        print('--------------ddd-----', self.xcamera, self.camera_index)
-        self.xcamera.play = False
-        if platform == "android":
-            self.xcamera._camera._release_camera()
-        if self.xcamera._camera:
-            self.xcamera._camera._device.release()
-            # self.xcamera._camera = None
-            # self.xcamera._camera.index = -1
-            # self.xcamera.index = -1
+    def on_leave(self):
+        self.ids.xCam.play = False
+        self.ids.xCam.texture = None
+        self.ids.xCam._camera._device.release()
     pass
 
 
@@ -293,25 +256,16 @@ class MyApp(App):
             if not self.sm.has_screen('scanner2'):
                 Builder.load_file('Scanner2.kv')
                 self.sm.add_widget(ScannerScreen2(name='scanner2'))
-            else:
-                cam = self.sm.get_screen('scanner2').ids.xCam
-                print(self.sm.get_screen('scanner2').ids, cam)
-                # cam.run()
-                # cam.index = 0
-                # cam.play = True
-                # self.sm.add_widget(ScannerScreen2(name='scanner2'))
-            self.sm.current = 'scanner2'
+            self.go_to_screen('scanner2')
         elif name == 'camera':
             if not self.sm.has_screen('camera'):
                 Builder.load_file('Camera.kv')
                 self.sm.add_widget(CameraScreen(name='camera'))
-            else:
-                print(self)
-            self.sm.current = 'camera'
+            self.go_to_screen('camera')
         pass
 
-    def remove_scanner_screen(self):
-        self.sm.current = 'menu'
+    def go_to_screen(self, screen):
+        self.sm.current = screen
 
 
 if __name__ == '__main__':

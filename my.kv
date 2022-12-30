@@ -1,14 +1,23 @@
 #:kivy 1.8.0
-
-<MenuScreen>:
+<MenuScreen>:   
     BoxLayout:
+        padding: 5
+        spacing: 5
+        orientation: 'vertical'
+        Label:
+            size_hint: (1, .1)
+            text: 'Qr/bar code reader - Kivy App'
+        BoxLayout:
+            spacing: 5
+            Button:
+                text: 'Eg: kivy.Camera'
+                on_press: app.load_screen('camera')
+            Button:
+                text: 'Eg: kivy_garden.xcamera'
+                on_press: app.load_screen('scanner2')
         Button:
-            text: 'Goto Camera'
-            on_press: app.load_screen('camera')
-        Button:
-            text: 'Goto Scanner'
-            on_press: app.load_screen('scanner2')
-        Button:
-            text: 'Quit'
+            text: 'Exit'
+            size_hint: (1, .1)
             on_press: app.stop()
+                
 
